@@ -2,7 +2,6 @@ import pytest
 import httpx
 
 
-@pytest.mark.integration
 class TestEmptyResultRetryIntegration:
     """测试空结果重试的集成测试"""
 
@@ -19,7 +18,6 @@ class TestEmptyResultRetryIntegration:
 
         assert call_counter['count'] == 2, f"默认配置应该启用重试，实际调用了 {call_counter['count']} 次"
         assert "default config works" in result
-
 
     @pytest.mark.asyncio
     async def test_explicit_disabled_no_retry(self, monkeypatch, provider, mock_http_client, call_counter):
@@ -98,7 +96,8 @@ class TestEmptyResultRetryIntegration:
         assert "success after retry" in result
 
     @pytest.mark.asyncio
-    async def test_network_error_and_empty_result_share_retry_count(self, monkeypatch, provider, mock_http_client, call_counter):
+    async def test_network_error_and_empty_result_share_retry_count(self, monkeypatch, provider, mock_http_client,
+                                                                    call_counter):
         """
         场景：第一次网络错误，第二次空结果，第三次成功
         预期：两种重试机制共享同一个计数器
