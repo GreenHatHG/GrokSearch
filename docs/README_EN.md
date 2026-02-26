@@ -118,6 +118,7 @@ Configuration is done through **environment variables**, set directly in the `en
 | `GROK_DEBUG` | ❌ | `false` | Enable debug mode (`true`/`false`) |
 | `GROK_LOG_LEVEL` | ❌ | `INFO` | Log level (DEBUG/INFO/WARNING/ERROR) |
 | `GROK_LOG_DIR` | ❌ | `logs` | Log file storage directory |
+| `GROK_RETRY_EXTRA_STATUS_CODES` | ❌ | - | Extra retryable HTTP status codes (comma-separated, e.g. `403,409`) |
 
 ⚠️ **Security Notes**:
 - API Keys are stored in Claude Code configuration file (`~/.config/claude/mcp.json`), please protect this file

@@ -76,7 +76,8 @@ def _is_retryable_exception(exc) -> bool:
     if isinstance(exc, (httpx.TimeoutException, httpx.NetworkError, httpx.ConnectError, httpx.RemoteProtocolError)):
         return True
     if isinstance(exc, httpx.HTTPStatusError):
-        return exc.response.status_code in RETRYABLE_STATUS_CODES
+        retryable_status_codes = RETRYABLE_STATUS_CODES | config.retry_extra_status_codes
+        return exc.response.status_code in retryable_status_codes
     return False
 
 

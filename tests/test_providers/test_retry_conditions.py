@@ -111,3 +111,67 @@ class TestEmptyResultRetryIntegration:
 
         assert call_counter['count'] == 3, f"应该总共调用 3 次，实际 {call_counter['count']} 次"
         assert "final success" in result
+
+    @pytest.mark.asyncio
+    async def test_http_403_not_retry_by_default(self, provider, mock_http_client, call_counter):
+        """
+        场景：第一次返回 403 的 HTTPStatusError（默认配置）
+        预期：不应该重试，直接抛出异常
+        """
+        request = httpx.Request("POST", "http://test-api.com/chat/completions")
+        response = httpx.Response(403, request=request)
+        exc = httpx.HTTPStatusError("403 Forbidden", request=request, response=response)
+
+        responses = [exc, "should not be returned"]
+
+        with mock_http_client(responses):
+            with pytest.raises(httpx.HTTPStatusError):
+                await provider.search("test query")
+
+        assert call_counter['count'] == 1, f"默认不应重试 403，实际调用了 {call_counter['count']} 次"
+
+    @pytest.mark.asyncio
+    async def test_http_403_retries_when_configured(self, monkeypatch, provider, mock_http_client, call_counter):
+        """
+        场景：第一次返回 403 的 HTTPStatusError，但配置将 403 加入可重试列表
+        预期：应该重试一次并成功
+        """
+        monkeypatch.setenv("GROK_RETRY_EXTRA_STATUS_CODES", "403")
+        monkeypatch.setenv("GROK_RETRY_MAX_ATTEMPTS", "1")
+        monkeypatch.setenv("GROK_RETRY_MULTIPLIER", "0")
+        monkeypatch.setenv("GROK_RETRY_MAX_WAIT", "0")
+
+        request = httpx.Request("POST", "http://test-api.com/chat/completions")
+        response = httpx.Response(403, request=request)
+        exc = httpx.HTTPStatusError("403 Forbidden", request=request, response=response)
+
+        responses = [exc, "success after 403 retry"]
+
+        with mock_http_client(responses):
+            result = await provider.search("test query")
+
+        assert call_counter['count'] == 2, f"开启后应重试 1 次（总共 2 次请求），实际 {call_counter['count']} 次"
+        assert "success after 403 retry" in result
+
+    @pytest.mark.asyncio
+    async def test_http_multiple_status_codes_retries_when_configured(self, monkeypatch, provider, mock_http_client, call_counter):
+        """
+        场景：配置多个可重试状态码（逗号分隔），第一次返回其中一个（409）
+        预期：应该重试一次并成功
+        """
+        monkeypatch.setenv("GROK_RETRY_EXTRA_STATUS_CODES", "403, 409")
+        monkeypatch.setenv("GROK_RETRY_MAX_ATTEMPTS", "1")
+        monkeypatch.setenv("GROK_RETRY_MULTIPLIER", "0")
+        monkeypatch.setenv("GROK_RETRY_MAX_WAIT", "0")
+
+        request = httpx.Request("POST", "http://test-api.com/chat/completions")
+        response = httpx.Response(409, request=request)
+        exc = httpx.HTTPStatusError("409 Conflict", request=request, response=response)
+
+        responses = [exc, "success after 409 retry"]
+
+        with mock_http_client(responses):
+            result = await provider.search("test query")
+
+        assert call_counter['count'] == 2, f"开启后应重试 1 次（总共 2 次请求），实际 {call_counter['count']} 次"
+        assert "success after 409 retry" in result

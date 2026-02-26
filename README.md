@@ -110,6 +110,21 @@ claude mcp add-json grok-search --scope user '{
 }'
 ```
 
+#### 配置指南
+
+配置通过环境变量完成，直接在安装命令的 `env` 字段中设置：
+
+| 环境变量 | 必填 | 默认值 | 说明 |
+|---|---:|---|---|
+| `GROK_API_URL` | 是 | - | Grok API endpoint（OpenAI 兼容格式） |
+| `GROK_API_KEY` | 是 | - | API Key |
+| `GROK_DEBUG` | 否 | `false` | 是否开启 debug |
+| `GROK_LOG_LEVEL` | 否 | `INFO` | 日志级别（DEBUG/INFO/WARNING/ERROR） |
+| `GROK_LOG_DIR` | 否 | `logs` | 日志文件存放目录 |
+| `GROK_RETRY_EXTRA_STATUS_CODES` | 否 | - | 额外可重试的 HTTP 状态码，逗号分隔（例如 `403,409`） |
+
+`GROK_RETRY_EXTRA_STATUS_CODES` 适用于上游将内部 key 的额度/封禁等问题透传为 `403` 的场景；默认不设置时不会重试 `403`。
+
 
 ### Step 2. 验证安装 & 检查MCP配置
 

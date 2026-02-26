@@ -4,8 +4,16 @@ pytest 配置和共享 fixtures
 提供测试所需的 mock 对象和工具函数
 """
 
+import os
+import tempfile
+from pathlib import Path
+
 import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
+
+
+# Tests should not write logs to user home (~/.config). Use a writable temp dir by default.
+os.environ.setdefault("GROK_LOG_DIR", str(Path(tempfile.gettempdir()) / "grok-search-test-logs"))
 
 
 @pytest.fixture

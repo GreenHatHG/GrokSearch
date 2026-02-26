@@ -65,6 +65,26 @@ class Config:
         return os.getenv("GROK_RETRY_EMPTY_RESULTS", "true").lower() in ("true", "1", "yes")
 
     @property
+    def retry_extra_status_codes(self) -> set[int]:
+        """额外可重试的 HTTP 状态码（逗号分隔）"""
+        raw = os.getenv("GROK_RETRY_EXTRA_STATUS_CODES", "")
+        if not raw:
+            return set()
+
+        codes: set[int] = set()
+        for part in raw.split(","):
+            token = part.strip()
+            if not token:
+                continue
+            try:
+                code = int(token)
+            except ValueError:
+                continue
+            if 100 <= code <= 599:
+                codes.add(code)
+        return codes
+
+    @property
     def grok_api_url(self) -> str:
         url = os.getenv("GROK_API_URL")
         if not url:
@@ -150,6 +170,7 @@ class Config:
             "GROK_MODEL": self.grok_model,
             "GROK_DEBUG": self.debug_enabled,
             "GROK_RETRY_EMPTY_RESULTS": self.retry_empty_results_enabled,
+            "GROK_RETRY_EXTRA_STATUS_CODES": ",".join(str(c) for c in sorted(self.retry_extra_status_codes)),
             "GROK_LOG_LEVEL": self.log_level,
             "GROK_LOG_DIR": str(self.log_dir),
             "TAVILY_ENABLED": self.tavily_enabled,
